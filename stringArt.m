@@ -114,48 +114,60 @@ function [A, x] = stringArt(varargin)
     
 	pickedEdgesSequencePath = [outputPath '/' outputFileNamePrefix '_NH-' num2str(numPins) '_DW-' num2str(lowRes) '_WS-' num2str(superSamplingWindowWidth) '.txt' ];
     
-    [x, pickedEdgesSequence] = optimizeStringsGreedyMultiSampling(img, lowRes, superSamplingWindowWidth, minAngle, numPins, importanceMap, matrixPath);
-    
-    % Write EdgeList to file
-    fileID = fopen(pickedEdgesSequencePath, 'w');
-    fprintf(fileID, '%i\n', pickedEdgesSequence);
-    fclose(fileID);
-    
-    %Restore imOrig
-    lowResImageWidth  = lowRes;
-    highResImageWidth = lowRes * superSamplingWindowWidth;
-    
-	A = loadFullMatrix(matrixPath, highResImageWidth);
-    
-    recon = min(1, A * x);
-    reconImageHigh = reshape(recon, [highResImageWidth, highResImageWidth]);
-    reconImageHigh = flipud(reconImageHigh');
-    
-    reconImageLow = imresize(reconImageHigh, [lowResImageWidth, lowResImageWidth]);
-    
-    if (invertOutput)
-        reconImageHigh = 1 - reconImageHigh;
-        reconImageLow = 1 - reconImageLow;
+    % Check for existence of file
+    if exist(pickedEdgesSequencePath, 'file') == 2
+        e = edgeCodes(numPins);
+        x = zeros(size(e, 1), 1);
+        
+        fileID = fopen(pickedEdgesSequencePath, 'r');
+        pickedEdgesSequence = fscanf(fileID, '%d');
+        fclose(fileID);
+        
+        x(pickedEdgesSequence) = 1;
+    else
+        [x, pickedEdgesSequence] = optimizeStringsGreedyMultiSampling(img, lowRes, superSamplingWindowWidth, minAngle, numPins, importanceMap, matrixPath);
+        
+        % Write EdgeList to file
+        fileID = fopen(pickedEdgesSequencePath, 'w');
+        fprintf(fileID, '%i\n', pickedEdgesSequence);
+        fclose(fileID);
+
+        %Restore imOrig
+        lowResImageWidth  = lowRes;
+        highResImageWidth = lowRes * superSamplingWindowWidth;
+
+        A = loadFullMatrix(matrixPath, highResImageWidth);
+
+        recon = min(1, A * x);
+        reconImageHigh = reshape(recon, [highResImageWidth, highResImageWidth]);
+        reconImageHigh = flipud(reconImageHigh');
+
+        reconImageLow = imresize(reconImageHigh, [lowResImageWidth, lowResImageWidth]);
+
+        if (invertOutput)
+            reconImageHigh = 1 - reconImageHigh;
+            reconImageLow = 1 - reconImageLow;
+        end
+
+        recon512Path = [outputPath '/' outputFileNamePrefix '_NH-' num2str(numPins) '_DW-' num2str(lowRes) '_WS-' num2str(superSamplingWindowWidth) '-LowRes.png'];
+        reconNativePath = [outputPath '/' outputFileNamePrefix '_NH-' num2str(numPins) '_DW-' num2str(lowRes) '_WS-' num2str(superSamplingWindowWidth) '-HighRes.png'];
+
+        imwrite(reconImageHigh, reconNativePath);
+        imwrite(reconImageLow, recon512Path);
+
+        rmseValue = rmse(reconImageLow(mask), targetImage(mask));
+
+        % Write RMSE File
+        fileID = fopen([outputPath '/' outputFileNamePrefix '_RMSE-Value.txt' ], 'w');
+        fprintf(fileID, '%16.16f\n', rmseValue);
+        fclose(fileID);
+
+        % Write Error Image
+        gradient = ColorGradient(0.0, 1.0);
+        errorImage = abs(targetImage - reconImageLow);
+        heatMap = gradient.ColorAtValue(errorImage);
+        imwrite(heatMap, [outputPath '/' outputFileNamePrefix '_ErrorImage.png']);
     end
-    
-    recon512Path = [outputPath '/' outputFileNamePrefix '_NH-' num2str(numPins) '_DW-' num2str(lowRes) '_WS-' num2str(superSamplingWindowWidth) '-LowRes.png'];
-    reconNativePath = [outputPath '/' outputFileNamePrefix '_NH-' num2str(numPins) '_DW-' num2str(lowRes) '_WS-' num2str(superSamplingWindowWidth) '-HighRes.png'];
-    
-    imwrite(reconImageHigh, reconNativePath);
-    imwrite(reconImageLow, recon512Path);
-
-    rmseValue = rmse(reconImageLow(mask), targetImage(mask));
-
-	% Write RMSE File
-    fileID = fopen([outputPath '/' outputFileNamePrefix '_RMSE-Value.txt' ], 'w');
-    fprintf(fileID, '%16.16f\n', rmseValue);
-    fclose(fileID);
-    
-    % Write Error Image
-    gradient = ColorGradient(0.0, 1.0);
-    errorImage = abs(targetImage - reconImageLow);
-    heatMap = gradient.ColorAtValue(errorImage);
-    imwrite(heatMap, [outputPath '/' outputFileNamePrefix '_ErrorImage.png']);
     
     % Compute a consecutive Path and write Result File
     resultFilePath = [outputPath '/' outputFileNamePrefix '_NH-' num2str(numPins) '_DW-' num2str(lowRes) '_WS-' num2str(superSamplingWindowWidth) '_RESULT.txt' ];

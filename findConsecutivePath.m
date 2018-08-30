@@ -65,7 +65,8 @@ function [x, eCodes, stringList, hookSequence, hookApproachLeftSide, outsideMask
     % strings
     rop = flipud(sortrows(rop,3));
     
-    c = [0; cumsum(numHookConn * (255 : -1 : 2)')];
+    %c = [0; cumsum(numHookConn * (255 : -1 : 2)')];
+    c = [0; cumsum(numHookConn * (numPins - 1 : -1 : 2)')];
 
     ropEdgeIdsMin = c(rop(:, 1)) + 1 + (rop(:, 2) - rop(:, 1) - 1) * numHookConn;
     ropEdgeIds = repmat(ropEdgeIdsMin, 1, 4) + repmat((0 : 1 : 3), size(rop, 1), 1);

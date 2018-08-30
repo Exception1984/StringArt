@@ -16,5 +16,5 @@ stringArt( ...
     'frameDiameter', 614.4, ... % physical diameter of the circular frame in mm (default is 614.4)
     'pinSideLength', 2, ... % physical side length of a pin with quadratic cross section in mm (default is 2)
     'superSamplingWindowWidth', 8, ... % side length of the super sampling window (default is 8)
-    'minAngle', pi/8, ...
-    'dataPath', './data'); % Minimum angle (measured from frame center) between two connected pins (default is pi/8)
+    'minAngle', pi/8, ...   % Minimum angle (measured from frame center) between two connected pins (default is pi/8)
+    'dataPath', './data');
