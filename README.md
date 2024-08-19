@@ -6,7 +6,7 @@ Official repository for the Eurographics 2018 paper
 [Video](https://www.cg.tuwien.ac.at/research/publications/2018/Birsak2018-SA/Birsak2018-SA-video.mp4)
 
 # Example Input and Output
-![Einstein](einstein.png)
+![Einstein](Birsak2018-SA-image.png)
 
 ## Usage
 Simply start one of the example files, e.g. example_einstein.m
